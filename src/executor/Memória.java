@@ -1,12 +1,12 @@
 package executor;
 
 public class Memória {
-    protected String[] memória = new String[1000];
+    protected String[] memória = new String[350];
     public int contador = 0;
-    public int contador2 = 1000;
+    public int contador2 = 350;
 
     public Memória() {
-        for(int i = 0; i < 1000; i++) {
+        for(int i = 0; i < 350; i++) {
             memória[i] = "0x00";
         }
     }
@@ -26,7 +26,7 @@ public class Memória {
     }
 
     public void imprimir() {
-        for(int i = 0; i < 1000 ; i++) {
+        for(int i = 0; i < 350 ; i++) {
             System.out.println("posição " + i + " é: " + memória[i]);
         }
     }
