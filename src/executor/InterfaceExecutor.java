@@ -55,7 +55,7 @@ public class InterfaceExecutor extends JFrame {
             Registrador r = regs.get(nome);
             sbReg.append(nome)
                     .append(" = ")
-                    .append(r.getValor())
+                    .append(r.getNumber())
                     .append("\n");
         }
 
@@ -64,8 +64,8 @@ public class InterfaceExecutor extends JFrame {
         // MEMÓRIA
         StringBuilder sbMem = new StringBuilder();
 
-        for (int i = 0; i < Executor.pilha.memória.length; i++) {
-            sbMem.append(String.format("[%03d]  %s\n", i, Executor.pilha.memória[i]));
+        for (int i = 0; i < Executor.pilha.memory.length; i++) {
+            sbMem.append(String.format("[%03d]  %s\n", i, Executor.pilha.memory[i]));
         }
 
         areaMemoria.setText(sbMem.toString());

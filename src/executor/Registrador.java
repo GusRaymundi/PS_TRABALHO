@@ -1,43 +1,30 @@
 package executor;
 
-public class Registrador {
-	protected int valor;
-	private String endereço;
-	
-	Registrador(String endereçoAtual){
-		this.valor = 0;
-		this.endereço = endereçoAtual;
+public class Registrador{
+	protected int number;
+	private String address;
+
+	Registrador(String address){
+		this.number = 0;
+		this.address = address;
+	}	
+
+	public int getNumber(){
+		return this.number;
 	}
-	
-	public int getValor() {
-		return this.valor;
+
+	public String getAddress(){
+		return this.address;
 	}
-	
-	public String getEndereço() {
-		return this.endereço;
-	}
-	
-	public void setValor(int valorAtual) {
-		this.valor = valorAtual;
-	}
-	
-	public void imprimirTudo() { //impressão para teste 
-		System.out.println(this.valor);
-		System.out.println(this.endereço);
+
+	public void setNumber(int number){
+		this.number = number;
 	}
 
 	/*
-	 registradores:
-	 A - Acumulador - Operações aritméticas
-	 X - Index - Utilizado para endereçamento 
-	 L - Linkado - Utilizada para subrotinas 
-	 B - Base - Utilizado para endereçamento 
-	 S - Uso geral
-	 T - Uso geral
-	 F - Não sera utilizado(float point stacker)
-	 PC - Program counter - contém o endereço da próxima instrução 
-	 SW - Status Word - Utilizado para salvar resultados de comparações
-	 
-	 */
-	
+	public void testRegistrador(){
+		getNumber();
+		getAddress();
+	}
+	*/
 }
