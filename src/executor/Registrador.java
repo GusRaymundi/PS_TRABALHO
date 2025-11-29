@@ -1,30 +1,48 @@
 package executor;
 
-public class Registrador{
-	protected int number;
-	private String address;
+public class Registrador {
 
-	Registrador(String address){
-		this.number = 0;
-		this.address = address;
-	}	
+    private final String nome;
+    private final int codigo;
+    private int valor24bits;
 
-	public int getNumber(){
-		return this.number;
-	}
+    public Registrador(String nome, int codigo) {
+        this.nome = nome;
+        this.codigo = codigo;
+        this.valor24bits = 0;
+    }
 
-	public String getAddress(){
-		return this.address;
-	}
+    public String getNome() {
+        return nome;
+    }
 
-	public void setNumber(int number){
-		this.number = number;
-	}
+    public int getCodigo() {
+        return codigo;
+    }
 
-	/*
-	public void testRegistrador(){
-		getNumber();
-		getAddress();
-	}
-	*/
+    public int getValor() {
+        int v = valor24bits & 0xFFFFFF;
+        // se o bit de sinal (bit 23) estiver 1, estende o sinal para 32 bits
+        if ((v & 0x800000) != 0) {
+            v |= 0xFF000000;
+        }
+        return v;
+    }
+
+    public int getValorUnsigned() {
+        return valor24bits & 0xFFFFFF;
+    }
+
+    public void setValor(int novoValor) {
+        this.valor24bits = novoValor & 0xFFFFFF;
+    }
+
+    public void limpar() {
+        this.valor24bits = 0;
+    }
+
+    @Override
+    public String toString() {
+        return nome + " = 0x" + String.format("%06X", getValorUnsigned());
+    }
 }
