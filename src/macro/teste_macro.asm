@@ -1,0 +1,30 @@
+; DEFINIÇÃO DE MACROS
+
+INCR  MACRO &X
+        LOAD &X
+        ADD CONST_ONE
+        STORE &X 
+MEND
+
+
+DECR MACRO $X
+        LOAD &X
+        SUB CONST_ONE
+        STORE &X
+MEND
+
+
+INCR2 MACRO &Y
+        INCR &Y
+        INCR &Y
+MEND
+
+
+; PROGRAMA
+
+CONST_ONE WORD 1
+A WORD 0
+
+INCR A
+DECR A
+INCR2
