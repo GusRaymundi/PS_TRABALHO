@@ -11,7 +11,6 @@ public class Montador {
     private int locctr;
     private final TabelaSimbolos tabelaSimbolos;
     private final List<String> linhasCodigoFonte;
-    // NOVA LISTA: Para armazenar referências externas
     private List<String> registrosDeReferencia = new ArrayList<>();
 
     private static class Flags {
@@ -51,7 +50,7 @@ public class Montador {
     public List<String> segundaPassagem() {
         List<String> codigoObjeto = new ArrayList<>();
         locctr = 0;
-        registrosDeReferencia.clear(); // Limpa referências de montagens anteriores
+        registrosDeReferencia.clear(); 
 
         for (String linha : linhasCodigoFonte) {
             if (linha.trim().isEmpty() || linha.startsWith("."))
@@ -61,7 +60,6 @@ public class Montador {
             String instrucao = partes[1];
             String operando = partes[2];
 
-            // DEBUG: Mostrar cada linha processada
             System.out.println("📄 LINHA[" + locctr + "]: '" + linha + "'");
             System.out.println("   instrucao: '" + instrucao + "'");
             System.out.println("   operando: '" + operando + "'");
@@ -99,9 +97,8 @@ public class Montador {
     }
 
     private int gerarCodigoHex(String mnnemonico, String operando) {
-        // Tratamento especial para RSUB (não tem operando)
         if (mnnemonico.equals("RSUB")) {
-            return buscarOpcode("RSUB") << 16; // 0x4C0000 em formato 3
+            return buscarOpcode("RSUB") << 16; 
         }
         
         int opcodeBase = buscarOpcode(mnnemonico);
@@ -109,23 +106,17 @@ public class Montador {
 
         f.e = mnnemonico.startsWith("+") ? 1 : 0;
         processarFlagsEnderecamento(operando, f);
-
         Integer enderecoDestino = null;
         
-        // 1. Tenta buscar na tabela de símbolos (se tiver operando)
         if (f.operandoLimpo != null && !f.operandoLimpo.isEmpty()) {
             enderecoDestino = tabelaSimbolos.obterEndereco(f.operandoLimpo);
         }
-
-        // 2. Se não encontrou na tabela, tenta como número
         if (enderecoDestino == null) {
             if (f.operandoLimpo != null && !f.operandoLimpo.isEmpty()) {
                 try {
                     enderecoDestino = Integer.parseInt(f.operandoLimpo);
                 } catch (NumberFormatException ex) {
-                    // 3. Não é número e não está na tabela → referência externa
                     if (f.operandoOriginal != null && !f.operandoOriginal.isEmpty()) {
-                        // Limpa o nome do símbolo (remove #, @, ,X)
                         String nomeSimbolo = f.operandoOriginal.replace("#", "")
                                                             .replace("@", "")
                                                             .replace(",X", "");
@@ -135,17 +126,14 @@ public class Montador {
                     enderecoDestino = 0;
                 }
             } else {
-                // 4. Operando vazio (não é referência externa)
                 enderecoDestino = 0;
             }
         }
 
         int proximoPC = locctr + (f.e == 1 ? 4 : 3);
 
-        // 5. Calcula deslocamento (para formato 3)
-        if (f.e == 0) { // Formato 3
+        if (f.e == 0) { 
             if (f.i == 1 && f.n == 0 && enderecoDestino <= 4095) {
-                // Imediato pequeno
                 f.p = 0;
                 f.b = 0;
                 f.disp = enderecoDestino;
@@ -153,15 +141,13 @@ public class Montador {
                 calcularDeslocamento(enderecoDestino, proximoPC, f);
             }
         }
-
-        // 6. Monta a instrução
-        if (f.e == 0) { // Formato 3
+        if (f.e == 0) { 
             int resultado = (opcodeBase << 16);
             resultado |= (f.n << 17) | (f.i << 16);
             resultado |= (f.x << 15) | (f.b << 14) | (f.p << 13) | (f.e << 12);
             resultado |= (f.disp & 0xFFF);
             return resultado;
-        } else { // Formato 4
+        } else { 
             long resultadoL = ((long) (opcodeBase & 0xFC) << 24);
             resultadoL |= ((long) f.n << 25) | ((long) f.i << 24);
             resultadoL |= (f.x << 23) | (f.b << 22) | (f.p << 21) | (f.e << 20);
@@ -175,7 +161,7 @@ public class Montador {
         String instrucao = partes[idx];
 
         if (instrucao.equals("START") || instrucao.equals("END") || instrucao.equals("BASE")) {
-            locctr += 0; // Não ocupa espaço!
+            locctr += 0; 
         } else if (instrucao.startsWith("+")) {
             locctr += 4;
         } else if (instrucao.equals("RESW")) {
@@ -261,7 +247,6 @@ public class Montador {
                     writer.println(entry.getKey() + ":" + String.format("%04X", entry.getValue()));
                 }
 
-                // CORREÇÃO: Agora escreve as referências capturadas
                 writer.println("[REF]");
                 for (String ref : registrosDeReferencia) {
                     writer.println(ref);
