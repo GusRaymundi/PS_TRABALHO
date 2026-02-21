@@ -17,7 +17,12 @@ public class TabelaSimbolos {
         return simbolos.get(rotulo);
     }
 
+    public Map<String, Integer> getMapaSimbolos() {
+        return this.simbolos;
+    }
+
     public void limpar() {
         simbolos.clear();
     }
+
 }
