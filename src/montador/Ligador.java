@@ -34,7 +34,6 @@ public class Ligador {
         int tamanho;
         List<Instrucao> instrucoes = new ArrayList<>();
         Map<String, Integer> simbolosDefinidos = new HashMap<>();
-        // Mapa de Simbolo -> Lista de Offsets em Bytes onde ele é usado
         Map<String, List<Integer>> referenciasExternas = new HashMap<>();
         
         Modulo(String nome) {
@@ -229,3 +228,4 @@ public class Ligador {
     }
 
 }
+
