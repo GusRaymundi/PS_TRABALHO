@@ -44,8 +44,8 @@ public class Ligador {
 
     private static class Instrucao {
         String codigoHex;
-        int enderecoAbsoluto; // Definido na passagem 2
-        int enderecoRelativo; // Offset em bytes dentro do módulo
+        int enderecoAbsoluto; 
+        int enderecoRelativo;
         int tamanho;
         String formato;
         boolean precisaRelocar;
@@ -67,10 +67,6 @@ public class Ligador {
     }
 
     private void analisarInstrucao(Instrucao inst, Modulo modulo) {
-        // Agora a análise é simplificada: se o endereço relativo desta instrução 
-        // (ou o campo de endereço dela) foi marcado no [REF], ela é externa.
-        
-        // O montador aponta para o byte do endereço (locctr + 1)
         int offsetAlvo = inst.enderecoRelativo + 1;
 
         for (Map.Entry<String, List<Integer>> entry : modulo.referenciasExternas.entrySet()) {
@@ -81,7 +77,6 @@ public class Ligador {
             }
         }
 
-        // Se não for externa, verificamos se precisa de relocação local (Formato 4 ou Direto)
         long valor = Long.parseLong(inst.codigoHex, 16);
         if (inst.formato.equals("3")) {
             int ni = (int)((valor >> 16) & 0x3);
@@ -89,10 +84,9 @@ public class Ligador {
             boolean p = ((xbpe >> 1) & 0x1) == 1;
             boolean b = ((xbpe >> 2) & 0x1) == 1;
             
-            // Se não é relativo ao PC nem à Base, e é endereçamento direto, precisa relocar
             if (!p && !b && (ni == 3)) inst.precisaRelocar = true;
         } else {
-            inst.precisaRelocar = true; // Formato 4 sempre reloca endereço absoluto
+            inst.precisaRelocar = true; 
         }
     }
 
@@ -136,7 +130,6 @@ public class Ligador {
             modulo.tamanho = bytesAcumulados;
             modulo.enderecoInicial = enderecoAtual;
 
-            // Alimenta a Tabela Global
             for (Map.Entry<String, Integer> entry : modulo.simbolosDefinidos.entrySet()) {
                 String nome = entry.getKey();
                 int abs = modulo.enderecoInicial + entry.getValue();
@@ -147,7 +140,6 @@ public class Ligador {
                 }
             }
 
-            // Analisa as instruções agora que temos as refs carregadas
             for (Instrucao i : modulo.instrucoes) analisarInstrucao(i, modulo);
 
             modulos.add(modulo);
@@ -176,7 +168,6 @@ public class Ligador {
     private String relocarInstrucao(Instrucao inst, Modulo modulo) {
         long valor = Long.parseLong(inst.codigoHex, 16);
 
-        // Formato 4 (8 dígitos hex)
         if (inst.formato.equals("4")) {
             long opcodeFlags = valor & 0xFFF00000L;
             int enderecoOriginal = (int)(valor & 0xFFFFF);
@@ -197,7 +188,6 @@ public class Ligador {
             }
             return String.format("%08X", (opcodeFlags | (novoEnd & 0xFFFFF)));
         } 
-        // Formato 3 (6 dígitos hex)
         else {
             int opcodeFlags = (int)(valor & 0xFFF000);
             int enderecoOriginal = (int)(valor & 0xFFF);
@@ -237,4 +227,5 @@ public class Ligador {
                             s.nome, s.enderecoAbsoluto, s.moduloDefinidor);
         }
     }
+
 }
