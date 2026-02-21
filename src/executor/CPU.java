@@ -50,16 +50,6 @@ public class CPU {
     public Registrador PC() { return getRegistrador(REG_PC); }
     public Registrador SW() { return getRegistrador(REG_SW); }
 
-    // =========================
-    //  CÓDIGO DE CONDIÇÃO (CC)
-    // =========================
-
-    /**
-     * Define o CC (-1, 0, 1) com base no resultado de uma comparação.
-     * valor < 0 → CC = -1  (menor)
-     * valor = 0 → CC = 0   (igual)
-     * valor > 0 → CC = 1   (maior)
-     */
     public void setCCFromCompare(int resultado) {
         int cc;
         if (resultado < 0)      cc = -1;
