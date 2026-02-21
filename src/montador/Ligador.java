@@ -10,16 +10,12 @@ public class Ligador {
     private List<Modulo> modulos = new ArrayList<>();
     private int enderecoCarga;
     private boolean temErro = false;
-
-    private enum TipoEnderecamento {
-        IMEDIATO, INDIRETO, DIRETO, PC_RELATIVE, BASE_RELATIVE, ABSOLUTO, DESCONHECIDO
-    }
+    private boolean modoLigadorSimples = false;
 
     private static class SimboloGlobal {
         String nome;
         int enderecoAbsoluto;
         String moduloDefinidor;
-        List<String> modulosReferenciadores = new ArrayList<>();
         
         SimboloGlobal(String nome, int endereco, String modulo) {
             this.nome = nome;
@@ -49,7 +45,6 @@ public class Ligador {
         String formato;
         boolean precisaRelocar;
         String simboloReferenciado;
-        TipoEnderecamento tipoEnd;
 
         Instrucao(String codigo, int endRelativo) {
             this.codigoHex = codigo;
@@ -57,12 +52,17 @@ public class Ligador {
             this.tamanho = (codigo.length() == 8) ? 4 : 3;
             this.formato = (codigo.length() == 8) ? "4" : "3";
             this.precisaRelocar = false;
-            this.tipoEnd = TipoEnderecamento.DESCONHECIDO;
         }
     }
 
     public Ligador(int enderecoCarga) {
-        this.enderecoCarga = enderecoCarga;
+        if (enderecoCarga < 0) {
+            this.enderecoCarga = 0;
+            this.modoLigadorSimples = true;
+        } else {
+            this.enderecoCarga = enderecoCarga;
+            this.modoLigadorSimples = false;
+        }
     }
 
     private void analisarInstrucao(Instrucao inst, Modulo modulo) {
@@ -71,21 +71,22 @@ public class Ligador {
         for (Map.Entry<String, List<Integer>> entry : modulo.referenciasExternas.entrySet()) {
             if (entry.getValue().contains(offsetAlvo)) {
                 inst.simboloReferenciado = entry.getKey();
-                inst.precisaRelocar = true;
+                inst.precisaRelocar = true; 
                 return;
             }
         }
 
-        long valor = Long.parseLong(inst.codigoHex, 16);
-        if (inst.formato.equals("3")) {
-            int ni = (int)((valor >> 16) & 0x3);
-            int xbpe = (int)((valor >> 12) & 0xF);
-            boolean p = ((xbpe >> 1) & 0x1) == 1;
-            boolean b = ((xbpe >> 2) & 0x1) == 1;
-            
-            if (!p && !b && (ni == 3)) inst.precisaRelocar = true;
-        } else {
-            inst.precisaRelocar = true; 
+        if (!modoLigadorSimples) {
+            long valor = Long.parseLong(inst.codigoHex, 16);
+            if (inst.formato.equals("3")) {
+                int ni = (int)((valor >> 16) & 0x3);
+                int xbpe = (int)((valor >> 12) & 0xF);
+                boolean p = ((xbpe >> 1) & 0x1) == 1;
+                boolean b = ((xbpe >> 2) & 0x1) == 1;
+                if (!p && !b && (ni == 3)) inst.precisaRelocar = true;
+            } else {
+                inst.precisaRelocar = true; 
+            }
         }
     }
 
@@ -150,10 +151,8 @@ public class Ligador {
 
     public List<String> segundaPassagem() {
         List<String> codigoFinal = new ArrayList<>();
-
         for (Modulo modulo : modulos) {
             int pcModulo = modulo.enderecoInicial;
-
             for (Instrucao inst : modulo.instrucoes) {
                 inst.enderecoAbsoluto = pcModulo;
                 String hexRelocado = relocarInstrucao(inst, modulo);
@@ -174,12 +173,7 @@ public class Ligador {
 
             if (inst.simboloReferenciado != null) {
                 SimboloGlobal sg = tabelaGlobal.get(inst.simboloReferenciado);
-                if (sg != null) {
-                    novoEnd = sg.enderecoAbsoluto;
-                } else {
-                    System.err.println("⚠ Símbolo não encontrado: " + inst.simboloReferenciado);
-                    novoEnd = enderecoOriginal + modulo.enderecoInicial;
-                }
+                novoEnd = (sg != null) ? sg.enderecoAbsoluto : (enderecoOriginal + modulo.enderecoInicial);
             } else if (inst.precisaRelocar) {
                 novoEnd = enderecoOriginal + modulo.enderecoInicial;
             } else {
@@ -190,42 +184,40 @@ public class Ligador {
         else {
             int opcodeFlags = (int)(valor & 0xFFF000);
             int enderecoOriginal = (int)(valor & 0xFFF);
+            int novoEnd;
+
             if (inst.simboloReferenciado != null) {
                 SimboloGlobal sg = tabelaGlobal.get(inst.simboloReferenciado);
-                if (sg != null) {
-                    return String.format("%06X", (opcodeFlags | (sg.enderecoAbsoluto & 0xFFF)));
-                } else {
-                    System.err.println("⚠ Símbolo não encontrado: " + inst.simboloReferenciado);
-                    return String.format("%06X", (opcodeFlags | ((enderecoOriginal + modulo.enderecoInicial) & 0xFFF)));
-                }
+                novoEnd = (sg != null) ? (sg.enderecoAbsoluto & 0xFFF) : ((enderecoOriginal + modulo.enderecoInicial) & 0xFFF);
             } else if (inst.precisaRelocar) {
-                return String.format("%06X", (opcodeFlags | ((enderecoOriginal + modulo.enderecoInicial) & 0xFFF)));
+                novoEnd = (enderecoOriginal + modulo.enderecoInicial) & 0xFFF;
             } else {
                 return inst.codigoHex;
             }
+            return String.format("%06X", (opcodeFlags | novoEnd));
         }
     }
 
     public void salvarArquivoFinal(List<String> codigo, String nomeArquivo) throws IOException {
         try (PrintWriter writer = new PrintWriter(new File(nomeArquivo), "UTF-8")) {
-            writer.println("; Arquivo executável SIC/XE");
+            writer.println(modoLigadorSimples ? "; MODO: LIGADOR SIMPLES (Requer Carregador Relocador)" 
+                                              : "; MODO: LIGADOR-RELOCADOR (Pronto para Carregador Absoluto)");
+            
             int endereco = enderecoCarga;
             for (String linha : codigo) {
                 writer.println(String.format("%04X", endereco) + "  " + linha);
                 endereco += (linha.length() == 8) ? 4 : 3;
             }
         }
-        System.out.println("✅ Executável '" + nomeArquivo + "' gerado com sucesso.");
+        System.out.println("Arquivo '" + nomeArquivo + "' gerado no modo " + (modoLigadorSimples ? "SIMPLES" : "RELOCADOR"));
     }
 
     public void exibirTabelaGlobal() {
-        System.out.println("\n🌐 Tabela Global de Símbolos:");
+        System.out.println("\nTabela Global de Símbolos:");
         for (Map.Entry<String, SimboloGlobal> entry : tabelaGlobal.entrySet()) {
             SimboloGlobal s = entry.getValue();
             System.out.printf("   %-10s = 0x%04X (definido em %s)\n",
                             s.nome, s.enderecoAbsoluto, s.moduloDefinidor);
         }
     }
-
 }
-
