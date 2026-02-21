@@ -6,14 +6,8 @@ import java.util.stream.Collectors;
 
 public class MainLigador {
     public static void main(String[] args) {
+        String pastaMontador = "objetos"; 
         
-        // =========================================================
-        // PASTA ONDE O MONTADOR SALVA OS ARQUIVOS .obj
-        // (configurável por parâmetro ou fixa)
-        // =========================================================
-        String pastaMontador = "objetos"; // padrão
-        
-        // Se passarem a pasta como argumento, usa essa
         if (args.length > 0) {
             pastaMontador = args[0];
         }
@@ -26,7 +20,6 @@ public class MainLigador {
             return;
         }
         
-        // Busca TODOS os arquivos .obj (sem filtrar nada)
         File[] arquivos = pasta.listFiles((dir, name) -> 
             name.toLowerCase().endsWith(".obj")
         );
@@ -37,22 +30,14 @@ public class MainLigador {
             return;
         }
         
-        // Lista dos arquivos a serem ligados
         List<String> arquivosObjeto = Arrays.stream(arquivos)
                                             .map(File::getAbsolutePath)
-                                            .sorted() // ordena para consistência
+                                            .sorted() 
                                             .collect(Collectors.toList());
         
-        // =========================================================
-        // CONFIGURAÇÕES DO LIGADOR
-        // =========================================================
         String arquivoSaida = "executavel.obj";
-        int enderecoDeCarga = 0x2000; // endereço padrão de carga
-        
-        // =========================================================
-        // EXECUTAR LIGADOR
-        // =========================================================
-        
+        int enderecoDeCarga = 0x2000; 
+
         System.out.println("=== LIGADOR SIC/XE ===\n");
         System.out.println("📁 Pasta: " + pastaMontador);
         System.out.println("📦 Módulos a ligar (" + arquivosObjeto.size() + "):");
@@ -70,18 +55,14 @@ public class MainLigador {
         try {
             Ligador ligador = new Ligador(enderecoDeCarga);
             
-            // PASSAGEM 1: Mapeamento de símbolos
             System.out.println("🔍 PASSAGEM 1: Mapeamento...");
             ligador.primeiraPassagem(arquivosObjeto);
             
-            // Mostra tabela global
             ligador.exibirTabelaGlobal();
             
-            // PASSAGEM 2: Geração de código
             System.out.println("\n🔧 PASSAGEM 2: Relocação...");
             List<String> codigoFinal = ligador.segundaPassagem();
             
-            // Salva resultado
             ligador.salvarArquivoFinal(codigoFinal, arquivoSaida);
             
             System.out.println("\n✅ Ligação concluída com sucesso!");
@@ -96,4 +77,5 @@ public class MainLigador {
             e.printStackTrace();
         }
     }
+
 }
