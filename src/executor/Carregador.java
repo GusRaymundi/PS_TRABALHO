@@ -5,28 +5,24 @@ import java.nio.file.*;
 import java.util.*;
 
 public class Carregador {
-    private Maquina maquina; 
+    private Maquina maquina;
 
     public Carregador(Maquina maquina) {
         this.maquina = maquina;
     }
 
-    public int carregar(String caminhoArquivo) throws IOException {
+    // checa se o executavel precisa de relocacao na carga
+    public boolean isModoSimples(String caminhoArquivo) throws IOException {
         List<String> linhas = Files.readAllLines(Paths.get(caminhoArquivo));
-        if (linhas.isEmpty()) throw new IOException("Arquivo executável está vazio!");
+        if (linhas.isEmpty()) throw new IOException("Arquivo executavel esta vazio!");
+        return linhas.get(0).contains("SIMPLES");
+    }
 
-        String primeiraLinha = linhas.get(0);
-        boolean modoSimples = primeiraLinha.contains("SIMPLES");
-        int deslocamentoRelocacao = 0;
+    // le o executavel e joga na memoria, retorna endereco inicial pro PC
+    public int carregar(String caminhoArquivo, int deslocamentoRelocacao) throws IOException {
+        List<String> linhas = Files.readAllLines(Paths.get(caminhoArquivo));
+        if (linhas.isEmpty()) throw new IOException("Arquivo executavel esta vazio!");
 
-        if (modoSimples) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.print("MODO SIMPLES: Digite o endereço de carga (Hex): ");
-            String entrada = scanner.nextLine().trim();
-            deslocamentoRelocacao = Integer.parseInt(entrada, 16);
-        }
-
-        System.out.println("Carregando programa na memória...");
         int enderecoInicialParaPC = -1;
 
         for (int i = 1; i < linhas.size(); i++) {
@@ -36,13 +32,18 @@ public class Carregador {
             String[] partes = linha.split("\\s+");
             int enderecoOriginal = Integer.parseInt(partes[0], 16);
             String codigoHex = partes[1];
-            
+
             int enderecoReal = enderecoOriginal + deslocamentoRelocacao;
-            
+
             if (enderecoInicialParaPC == -1) enderecoInicialParaPC = enderecoReal;
             maquina.carregarProgramaHex(Collections.singletonList(codigoHex), enderecoReal);
         }
-        
+
         return enderecoInicialParaPC;
+    }
+
+    // sobrecarga sem deslocamento
+    public int carregar(String caminhoArquivo) throws IOException {
+        return carregar(caminhoArquivo, 0);
     }
 }

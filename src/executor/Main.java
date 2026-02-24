@@ -9,16 +9,12 @@ public class Main {
 
         Path caminho = Paths.get("programa.txt");
 
-        //Lê todas as linhas e filtra vazias
         List<String> linhas = Files.readAllLines(caminho);
         List<String> programa = new ArrayList<>();
 
         for (String linha : linhas) {
             linha = linha.trim();
             if (!linha.isEmpty()) {
-                if (linha.length() != 6) {
-                    throw new RuntimeException("Linha inválida no arquivo: " + linha);
-                }
                 programa.add(linha);
             }
         }
@@ -30,15 +26,30 @@ public class Main {
         System.out.println("== PROGRAMA CARREGADO ==\n");
         imprimirEstado(maquina);
 
-        System.out.println("\n== EXECUÇÃO ==");
+        System.out.println("\n== EXECUCAO ==");
 
-        for (int passo = 0; passo < programa.size(); passo++) {
+        int maxPassos = 10000;
+        for (int passo = 0; passo < maxPassos; passo++) {
+            int pcAntes = maquina.getCpu().PC().getValorUnsigned();
             System.out.println("\n-- Passo " + passo + " --");
-            maquina.passo();
+
+            try {
+                maquina.passo();
+            } catch (Exception e) {
+                System.out.println("Programa finalizado: " + e.getMessage());
+                break;
+            }
+
             imprimirEstado(maquina);
+
+            int pcDepois = maquina.getCpu().PC().getValorUnsigned();
+            if (pcDepois == 0 && pcAntes != 0) {
+                System.out.println("\nPrograma retornou (RSUB). Finalizando.");
+                break;
+            }
         }
 
-        System.out.println("\n== FIM DA EXECUÇÃO ==\n");
+        System.out.println("\n== FIM DA EXECUCAO ==\n");
     }
 
     private static void imprimirEstado(Maquina m) {

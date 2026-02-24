@@ -1,16 +1,16 @@
-; DEFINIÇÃO DE MACROS
+; DEFINICAO DE MACROS
 
 INCR  MACRO &X
-        LOAD &X
-        ADD CONST_ONE
-        STORE &X 
+        LDA &X
+        ADD UMVAL
+        STA &X
 MEND
 
 
 DECR MACRO &X
-        LOAD &X
-        SUB CONST_ONE
-        STORE &X
+        LDA &X
+        SUB UMVAL
+        STA &X
 MEND
 
 
@@ -22,9 +22,15 @@ MEND
 
 ; PROGRAMA
 
-CONST_ONE WORD 1
-A WORD 0
-
-INCR A
-DECR A
-INCR2 A
+TESTE START 0
+        LDA VALOR
+        STA RESULT
+INCR RESULT
+DECR RESULT
+INCR2 RESULT
+        LDA RESULT
+        RSUB
+UMVAL WORD 1
+VALOR WORD 5
+RESULT RESW 1
+        END TESTE

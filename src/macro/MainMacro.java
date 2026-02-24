@@ -89,6 +89,100 @@ public class MainMacro {
         }
     }
 
+    /**
+     * Processa macros em memoria: recebe linhas fonte, retorna linhas expandidas.
+     */
+    public static List<String> processarEmMemoria(List<String> linhasFonte) {
+        Map<String, Macro> tabelaMacros = new HashMap<>();
+        List<String> resultado = new ArrayList<>();
+
+        Macro macroAtual = null;
+        int nivelMacro = 0;
+
+        for (String linhaOriginal : linhasFonte) {
+            String linha = linhaOriginal.trim();
+
+            if (linha.isEmpty() || linha.startsWith(";")) {
+                continue;
+            }
+
+            String[] partes = linha.split("\\s+");
+
+            if (linha.contains(" MACRO")) {
+                String nomeMacro = partes[0];
+                macroAtual = new Macro(nomeMacro);
+                if (partes.length >= 3) {
+                    String[] params = partes[2].split(",");
+                    for (String p : params) {
+                        macroAtual.adicionarParametro(p);
+                    }
+                }
+                nivelMacro++;
+                continue;
+            }
+
+            if (linha.equals("MEND")) {
+                nivelMacro--;
+                if (nivelMacro == 0 && macroAtual != null) {
+                    tabelaMacros.put(macroAtual.getNome(), macroAtual);
+                    macroAtual = null;
+                }
+                continue;
+            }
+
+            if (nivelMacro > 0) {
+                macroAtual.adicionarLinha(linhaOriginal);
+                continue;
+            }
+
+            if (tabelaMacros.containsKey(partes[0])) {
+                expandirLinhaEmMemoria(linha, tabelaMacros, resultado);
+            } else {
+                resultado.add(linhaOriginal);
+            }
+        }
+
+        return resultado;
+    }
+
+    private static void expandirLinhaEmMemoria(String linha,
+                                                Map<String, Macro> tabelaMacros,
+                                                List<String> resultado) {
+        linha = linha.trim();
+        String[] partes = linha.split("\\s+");
+        String nomeMacro = partes[0];
+
+        Macro macro = tabelaMacros.get(nomeMacro);
+        if (macro == null) {
+            resultado.add(linha);
+            return;
+        }
+
+        String[] argumentos = new String[0];
+        if (partes.length > 1) {
+            String resto = linha.substring(nomeMacro.length()).trim();
+            argumentos = resto.split(",");
+        }
+
+        for (String linhaCorpo : macro.getCorpo()) {
+            String linhaExpandida = linhaCorpo;
+            for (int i = 0; i < macro.getParametros().size(); i++) {
+                if (i < argumentos.length) {
+                    String parametro = macro.getParametros().get(i);
+                    String argumento = argumentos[i].trim();
+                    linhaExpandida = linhaExpandida.replace(parametro, argumento);
+                }
+            }
+
+            String primeiraPalavra = linhaExpandida.trim().split("\\s+")[0];
+            if (tabelaMacros.containsKey(primeiraPalavra)) {
+                expandirLinhaEmMemoria(linhaExpandida.trim(), tabelaMacros, resultado);
+            } else {
+                resultado.add(linhaExpandida);
+            }
+        }
+    }
+
     //expansão recursiva
     private static void expandirLinha(String linha,
                                       Map<String, Macro> tabelaMacros,

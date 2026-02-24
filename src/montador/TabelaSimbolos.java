@@ -1,10 +1,10 @@
 package montador;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TabelaSimbolos {
-    private final Map<String, Integer> simbolos = new HashMap<>();
+    private final Map<String, Integer> simbolos = new LinkedHashMap<>();
 
     public void adicionar(String rotulo, int endereco) {
         if (simbolos.containsKey(rotulo)) {

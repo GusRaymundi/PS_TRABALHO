@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -12,24 +9,48 @@
         },
         {
             "type": "java",
-            "name": "InterfaceSimulador",
+            "name": "Sistema Integrado",
+            "request": "launch",
+            "mainClass": "integrador.MainIntegrador",
+            "projectName": "PS_TRABALHO_1db240c8"
+        },
+        {
+            "type": "java",
+            "name": "Simulador GUI",
             "request": "launch",
             "mainClass": "executor.InterfaceSimulador",
             "projectName": "PS_TRABALHO_1db240c8"
         },
         {
             "type": "java",
-            "name": "Main",
+            "name": "Simulador CLI",
             "request": "launch",
             "mainClass": "executor.Main",
             "projectName": "PS_TRABALHO_1db240c8"
         },
         {
             "type": "java",
-            "name": "ExecutarMontador",
+            "name": "Montador",
             "request": "launch",
             "mainClass": "montador.ExecutarMontador",
-            "projectName": "PS_TRABALHO_1db240c8"
+            "projectName": "PS_TRABALHO_1db240c8",
+            "args": "programa.asm"
+        },
+        {
+            "type": "java",
+            "name": "Processador de Macros",
+            "request": "launch",
+            "mainClass": "macro.MainMacro",
+            "projectName": "PS_TRABALHO_1db240c8",
+            "args": "teste_macro.asm"
+        },
+        {
+            "type": "java",
+            "name": "Ligador",
+            "request": "launch",
+            "mainClass": "montador.MainLigador",
+            "projectName": "PS_TRABALHO_1db240c8",
+            "args": "objetos"
         }
     ]
 }

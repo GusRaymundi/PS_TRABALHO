@@ -1,0 +1,21 @@
+TESTE START 0
+        LDA VALOR
+        STA RESULT
+        LDA RESULT
+        ADD UMVAL
+        STA RESULT
+        LDA RESULT
+        SUB UMVAL
+        STA RESULT
+        LDA RESULT
+        ADD UMVAL
+        STA RESULT
+        LDA RESULT
+        ADD UMVAL
+        STA RESULT
+        LDA RESULT
+        RSUB
+UMVAL WORD 1
+VALOR WORD 5
+RESULT RESW 1
+        END TESTE

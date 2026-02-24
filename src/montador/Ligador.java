@@ -49,8 +49,16 @@ public class Ligador {
         Instrucao(String codigo, int endRelativo) {
             this.codigoHex = codigo;
             this.enderecoRelativo = endRelativo;
-            this.tamanho = (codigo.length() == 8) ? 4 : 3;
-            this.formato = (codigo.length() == 8) ? "4" : "3";
+            if (codigo.length() == 8) {
+                this.tamanho = 4;
+                this.formato = "4";
+            } else if (codigo.length() == 4) {
+                this.tamanho = 2;
+                this.formato = "2";
+            } else {
+                this.tamanho = 3;
+                this.formato = "3";
+            }
             this.precisaRelocar = false;
         }
     }
@@ -66,26 +74,44 @@ public class Ligador {
     }
 
     private void analisarInstrucao(Instrucao inst, Modulo modulo) {
-        int offsetAlvo = inst.enderecoRelativo + 1;
-
+        // vê se a instrucao referencia um simbolo externo
         for (Map.Entry<String, List<Integer>> entry : modulo.referenciasExternas.entrySet()) {
-            if (entry.getValue().contains(offsetAlvo)) {
+            if (entry.getValue().contains(inst.enderecoRelativo)) {
                 inst.simboloReferenciado = entry.getKey();
-                inst.precisaRelocar = true; 
+                inst.precisaRelocar = true;
                 return;
             }
         }
 
         if (!modoLigadorSimples) {
             long valor = Long.parseLong(inst.codigoHex, 16);
-            if (inst.formato.equals("3")) {
+            if (inst.formato.equals("4")) {
+                // formato 4 com endereco absoluto precisa relocar
+                int ni = (int)((valor >> 24) & 0x3);
+                if (ni == 3) {
+                    int addr = (int)(valor & 0xFFFFF);
+                    // so reloca se tiver endereco de verdade (ignora RSUB)
+                    int opcode = (int)((valor >> 24) & 0xFC);
+                    if (opcode != 0x4C && addr != 0) {
+                        inst.precisaRelocar = true;
+                    }
+                }
+            } else {
+                // formato 3: so reloca endereçamento direto (n=1, i=1, b=0, p=0)
+                // com deslocamento != 0 (exclui RSUB)
                 int ni = (int)((valor >> 16) & 0x3);
                 int xbpe = (int)((valor >> 12) & 0xF);
                 boolean p = ((xbpe >> 1) & 0x1) == 1;
                 boolean b = ((xbpe >> 2) & 0x1) == 1;
-                if (!p && !b && (ni == 3)) inst.precisaRelocar = true;
-            } else {
-                inst.precisaRelocar = true; 
+                boolean e = (xbpe & 0x1) == 1;
+                int disp = (int)(valor & 0xFFF);
+                int opcode = (int)((valor >> 16) & 0xFC);
+
+                // PC-relativo e base-relativo nao precisam relocar
+                // RSUB (0x4C) e imediato (ni != 3) tambem nao
+                if (!p && !b && !e && ni == 3 && disp != 0 && opcode != 0x4C) {
+                    inst.precisaRelocar = true;
+                }
             }
         }
     }
@@ -164,6 +190,10 @@ public class Ligador {
     }
 
     private String relocarInstrucao(Instrucao inst, Modulo modulo) {
+        if (inst.formato.equals("2")) {
+            return inst.codigoHex; // formato 2 nao reloca
+        }
+
         long valor = Long.parseLong(inst.codigoHex, 16);
 
         if (inst.formato.equals("4")) {
